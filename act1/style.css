@@ -1,0 +1,103 @@
+html {
+    font-family: "Inter", sans-serif;;
+}
+
+h1 {
+    font-weight: bold;
+    text-align: center;
+}
+
+h2 {
+    font-weight: bold;
+}
+
+a {
+    color: #FF0000;
+    text-decoration: none;
+}
+
+.biggest-text {
+    font-size: 1.2em;
+    font-weight: bold;
+    transition: all 0.3s ease-in-out;
+    box-shadow: none;
+}
+
+.biggest-text:hover {
+    scale: 1.5;
+    transition: all 0.3s ease-in-out;
+}
+
+.slogan-business {
+    text-align: center;
+}
+
+.logo-header {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.tacoma {
+    text-align: center;
+    margin-bottom: 50px;
+    margin-top: 50px;
+}
+
+#tacoma2 {
+    scale: 0.8;
+}
+
+.prius {
+    text-align: center;
+    margin-bottom: 50px;
+    margin-top: 50px;
+}
+
+.supra {
+    text-align: center;
+    margin-bottom: 50px;
+    margin-top: 50px;
+}
+
+.contact-form {
+    text-align: center;
+    margin-top: 50px;
+}
+
+button {
+    background-color: #FF0000;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #CC0000;
+}
+button:active {
+    background-color: #990000;
+}
+button:focus {
+    outline: none;
+}
+
+label, input, textarea {
+    display: block;
+    margin: 10px auto;
+}
+input, textarea {
+    width: 300px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    background-color: #f1f1f1;
+}
