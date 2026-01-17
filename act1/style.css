@@ -75,18 +75,6 @@ a {
     filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.2));
     position: relative;
     z-index: 1;
-    animation: fadeInDown 1s ease-out;
-}
-
-@keyframes fadeInDown {
-    from {
-        opacity: 0;
-        transform: translateY(-30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .container {
@@ -95,25 +83,10 @@ a {
     padding: 40px 20px;
 }
 
-.projects {
-    animation: fadeIn 1s ease-out;
-}
-
 .projects > h1 {
     font-size: 3em;
     margin-bottom: 60px;
     color: #333;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .tacoma, .prius, .supra {
@@ -123,23 +96,11 @@ a {
     margin-bottom: 50px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    animation: fadeInUp 0.8s ease-out;
 }
 
 .tacoma:hover, .prius:hover, .supra:hover {
     transform: translateY(-10px);
     box-shadow: 0 20px 60px rgba(255, 0, 0, 0.2);
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(40px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 
 .tacoma {
@@ -320,7 +281,6 @@ footer p:last-child {
     text-align: center;
     color: white;
     min-width: 200px;
-    animation: fadeInUp 1s ease-out;
 }
 
 .stat-item h3 {
@@ -342,39 +302,3 @@ footer p:last-child {
     font-size: 1.2em;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .slogan-business {
-        font-size: 1.8em;
-    }
-    
-    .projects > h1 {
-        font-size: 2em;
-    }
-    
-    .tacoma, .prius, .supra {
-        padding: 20px;
-    }
-    
-    .tacoma h2, .prius h2, .supra h2 {
-        font-size: 1.8em;
-    }
-    
-    .tacoma img, .prius img, .supra img {
-        width: 100%;
-        height: auto;
-    }
-    
-    .stats-section {
-        flex-direction: column;
-        padding: 40px 20px;
-    }
-    
-    .stat-item h3 {
-        font-size: 3em;
-    }
-    
-    .contact-form {
-        padding: 30px 20px;
-    }
-}
