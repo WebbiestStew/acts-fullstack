@@ -126,6 +126,9 @@ button {
     font-size: 1.1rem;
     color: #333;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 #tasks-list li:hover {
@@ -142,9 +145,28 @@ button {
     transition: all 0.3s ease;
 }
 
-#tasks-list li:hover {
-    background: #f0f0f0;
-    transform: translateX(5px);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+/* Task completed state */
+#tasks-list li.completada .texto-tarea {
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+
+/* Task selected state */
+#tasks-list li.seleccionada {
+    background: #e3f2fd;
+    border-left: 6px solid #2196F3;
+}
+
+/* Checkbox styling */
+.checkbox-tarea {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.texto-tarea {
+    flex: 1;
+    text-align: left;
 }
 
