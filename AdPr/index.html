@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager | Stay Organized</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>
+                <i class="fas fa-tasks"></i>
+                Task Manager
+            </h1>
+            <p class="subtitle">Stay organized and productive</p>
+        </header>
+
+        <!-- Add Task Section -->
+        <div class="add-task-section">
+            <div class="input-group">
+                <input type="text" id="taskInput" placeholder="What do you need to do?" autocomplete="off">
+                <button id="addTaskBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Add Task
+                </button>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+
+        <!-- Tasks Section -->
+        <div class="tasks-section">
+            <div class="tasks-header">
+                <h2>
+                    <i class="fas fa-list-check"></i>
+                    My Tasks
+                </h2>
+                <div class="stats">
+                    <span id="totalTasks">Total: 0</span>
+                    <span id="completedTasks">Completed: 0</span>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">
+                    <i class="fas fa-list"></i> All
+                </button>
+                <button class="filter-btn" data-filter="pending">
+                    <i class="fas fa-clock"></i> Pending
+                </button>
+                <button class="filter-btn" data-filter="completed">
+                    <i class="fas fa-check-circle"></i> Completed
+                </button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>No tasks yet</h3>
+                <p>Add your first task to get started!</p>
+            </div>
+
+            <!-- Tasks List -->
+            <ul id="tasksList" class="tasks-list"></ul>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy; <span id="currentYear">2026</span> Task Manager. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>
+                    <i class="fas fa-edit"></i>
+                    Edit Task
+                </h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="editTaskInput" placeholder="Task name..." autocomplete="off">
+                <div class="modal-actions">
+                    <button id="saveEditBtn" class="btn-primary">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
+                    <button id="cancelEditBtn" class="btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
