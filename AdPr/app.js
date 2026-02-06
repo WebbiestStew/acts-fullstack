@@ -192,11 +192,6 @@ class TaskManager {
     toggleTaskStatus(id) {
         const task = this.getTaskById(id);
         if (task) {
-            task.completed = !task.completed;;
-    // Toggle task status (for local display only)
-    toggleTaskStatus(id) {
-        const task = this.getTaskById(id);
-        if (task) {
             task.completed = !task.completed;
             return true;
         }
