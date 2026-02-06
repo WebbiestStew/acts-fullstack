@@ -28,8 +28,26 @@ header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 40px 30px;
-    text-align: center;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.header-left {
+    flex: 1;
+    text-align: left;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 header h1 {
@@ -37,7 +55,6 @@ header h1 {
     margin-bottom: 10px;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 15px;
     font-weight: 700;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
@@ -48,6 +65,49 @@ header .subtitle {
     opacity: 0.95;
     font-weight: 400;
     letter-spacing: 0.5px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 25px;
+    font-size: 0.95rem;
+    backdrop-filter: blur(10px);
+}
+
+.user-info i {
+    font-size: 1.3rem;
+}
+
+.btn-logout {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Poppins', sans-serif;
+    backdrop-filter: blur(10px);
+}
+
+.btn-logout:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
 }
 
 /* Section for adding tasks */
@@ -422,8 +482,23 @@ footer {
 
 /* Responsive */
 @media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-left {
+        text-align: center;
+    }
+
     header h1 {
         font-size: 2rem;
+        justify-content: center;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: center;
     }
     
     .input-group {
@@ -464,6 +539,20 @@ footer {
     
     header {
         padding: 25px 20px;
+    }
+
+    header h1 {
+        font-size: 1.75rem;
+    }
+
+    .user-info {
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+
+    .btn-logout {
+        font-size: 0.85rem;
+        padding: 8px 16px;
     }
     
     .add-task-section, .tasks-section {

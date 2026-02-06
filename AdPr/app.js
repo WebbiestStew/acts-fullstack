@@ -1,80 +1,148 @@
+// API Configuration
+const API_URL = 'http://localhost:4000/api';
+
+// Authentication Helper
+function getAuthToken() {
+    return localStorage.getItem('token');
+}
+
+function getUserEmail() {
+    return localStorage.getItem('userEmail');
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userEmail');
+    window.location.href = 'login.html';
+}
+
+// Check authentication on page load
+function checkAuth() {
+    const token = getAuthToken();
+    if (!token) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
+}
+
 // Class to represent an individual task
 class Task {
-    constructor(id, name, completed = false) {
+    constructor(id, title, description = '', completed = false, createdAt = new Date()) {
         this.id = id;
-        this.name = name;
+        this.title = title;
+        this.description = description;
         this.completed = completed;
-        this.createdDate = new Date();
-    }
-
-    // Method to toggle completion status
-    toggleStatus() {
-        this.completed = !this.completed;
-        return this;
-    }
-
-    // Method to update the task name
-    updateName(newName) {
-        if (newName && newName.trim() !== '') {
-            this.name = newName.trim();
-            return true;
-        }
-        return false;
+        this.createdAt = new Date(createdAt);
     }
 }
 
-// Class to manage all tasks
+// Class to manage all tasks with API integration
 class TaskManager {
     constructor() {
         this.tasks = [];
-        this.idCounter = 1;
         this.currentFilter = 'all';
-        this.loadStoredTasks();
     }
 
-    // Load tasks from localStorage if they exist
-    loadStoredTasks() {
-        const savedTasks = localStorage.getItem('tasks');
-        if (savedTasks) {
-            const tasksData = JSON.parse(savedTasks);
-            this.tasks = tasksData.map(task => {
-                const newTask = new Task(task.id, task.name, task.completed);
-                newTask.createdDate = new Date(task.createdDate);
-                return newTask;
+    // Get authorization headers
+    getHeaders() {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAuthToken()}`
+        };
+    }
+
+    // Load tasks from API
+    async loadTasks() {
+        try {
+            const response = await fetch(`${API_URL}/items`, {
+                headers: this.getHeaders()
             });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            const data = await response.json();
             
-            // Find the highest ID to continue from there
-            const maxId = this.tasks.reduce((max, task) => Math.max(max, task.id), 0);
-            this.idCounter = maxId + 1;
+            if (response.ok) {
+                this.tasks = data.items.map(item => 
+                    new Task(item.id, item.title, item.description, false, item.created_at)
+                );
+                return { success: true };
+            } else {
+                throw new Error(data.error || 'Failed to load tasks');
+            }
+        } catch (error) {
+            console.error('Error loading tasks:', error);
+            return { success: false, message: error.message };
         }
     }
 
-    // Save tasks to localStorage
-    saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(this.tasks));
-    }
-
     // Add a new task
-    addTask(name) {
+    async addTask(name) {
         if (!name || name.trim() === '') {
             return { success: false, message: 'Task name cannot be empty' };
         }
 
-        const newTask = new Task(this.idCounter++, name.trim());
-        this.tasks.push(newTask);
-        this.saveTasks();
-        return { success: true, task: newTask };
+        try {
+            const response = await fetch(`${API_URL}/items`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    title: name.trim(),
+                    description: ''
+                })
+            });
+
+            if (response.status === 401) {
+                logout();
+                return;
+            }
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const newTask = new Task(data.item.id, data.item.title, data.item.description, false, data.item.created_at);
+                this.tasks.unshift(newTask);
+                return { success: true, task: newTask };
+            } else {
+                throw new Error(data.error || 'Failed to add task');
+            }
+        } catch (error) {
+            console.error('Error adding task:', error);
+            return { success: false, message: error.message };
+        }
     }
 
     // Delete a task by ID
-    deleteTask(id) {
-        const index = this.tasks.findIndex(task => task.id === id);
-        if (index !== -1) {
-            this.tasks.splice(index, 1);
-            this.saveTasks();
-            return true;
+    async deleteTask(id) {
+        try {
+            const response = await fetch(`${API_URL}/items/${id}`, {
+                method: 'DELETE',
+                headers: this.getHeaders()
+            });
+
+            if (response.status === 401) {
+                logout();
+                return false;
+            }
+
+            if (response.ok || response.status === 204) {
+                const index = this.tasks.findIndex(task => task.id === id);
+                if (index !== -1) {
+                    this.tasks.splice(index, 1);
+                }
+                return true;
+            } else {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to delete task');
+            }
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            return false;
         }
-        return false;
     }
 
     // Get task by ID
@@ -82,22 +150,54 @@ class TaskManager {
         return this.tasks.find(task => task.id === id);
     }
 
-    // Toggle task status
+    // Update task name
+    async updateTaskName(id, newName) {
+        if (!newName || newName.trim() === '') {
+            return false;
+        }
+
+        try {
+            const task = this.getTaskById(id);
+            if (!task) return false;
+
+            const response = await fetch(`${API_URL}/items/${id}`, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify({
+                    title: newName.trim(),
+                    description: task.description || ''
+                })
+            });
+
+            if (response.status === 401) {
+                logout();
+                return false;
+            }
+
+            const data = await response.json();
+
+            if (response.ok) {
+                task.title = data.item.title;
+                return true;
+            } else {
+                throw new Error(data.error || 'Failed to update task');
+            }
+        } catch (error) {
+            console.error('Error updating task:', error);
+            return false;
+        }
+    }
+
+    // Toggle task status (for local display only)
     toggleTaskStatus(id) {
         const task = this.getTaskById(id);
         if (task) {
-            task.toggleStatus();
-            this.saveTasks();
-            return true;
-        }
-        return false;
-    }
-
-    // Update task name
-    updateTaskName(id, newName) {
+            task.completed = !task.completed;;
+    // Toggle task status (for local display only)
+    toggleTaskStatus(id) {
         const task = this.getTaskById(id);
-        if (task && task.updateName(newName)) {
-            this.saveTasks();
+        if (task) {
+            task.completed = !task.completed;
             return true;
         }
         return false;
@@ -111,7 +211,7 @@ class TaskManager {
             case 'pending':
                 return this.tasks.filter(task => !task.completed);
             default:
-                return [...this.tasks]; // Return array copy
+                return [...this.tasks];
         }
     }
 
@@ -139,10 +239,36 @@ class TaskInterface {
         this.editingTask = null;
         this.initializeDOMElements();
         this.setupEventListeners();
-        this.renderTasks();
-        this.updateStatistics();
-        this.updateEmptyState();
+        this.displayUserInfo();
+        this.initialize();
+    }
+
+    // Initialize app - load tasks async
+    async initialize() {
+        await this.loadTasks();
         this.updateCurrentYear();
+    }
+
+    // Load tasks from API
+    async loadTasks() {
+        const result = await this.taskManager.loadTasks();
+        if (result.success) {
+            this.renderTasks();
+            this.updateStatistics();
+            this.updateEmptyState();
+        }
+    }
+
+    // Display user info
+    displayUserInfo() {
+        const userEmail = getUserEmail();
+        const userInfoElement = document.getElementById('userInfo');
+        if (userInfoElement && userEmail) {
+            userInfoElement.innerHTML = `
+                <i class="fas fa-user-circle"></i>
+                <span>${userEmail}</span>
+            `;
+        }
     }
 
     // Initialize DOM element references
@@ -160,6 +286,7 @@ class TaskInterface {
         this.saveEditButton = document.getElementById('saveEditBtn');
         this.cancelEditButton = document.getElementById('cancelEditBtn');
         this.closeModalButton = document.querySelector('.close-modal');
+        this.logoutButton = document.getElementById('logoutBtn');
     }
 
     // Configure event listeners
@@ -169,6 +296,15 @@ class TaskInterface {
         this.taskInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addTask();
         });
+
+        // Logout
+        if (this.logoutButton) {
+            this.logoutButton.addEventListener('click', () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    logout();
+                }
+            });
+        }
 
         // Filters
         this.filterButtons.forEach(button => {
@@ -190,9 +326,12 @@ class TaskInterface {
     }
 
     // Add a new task
-    addTask() {
+    async addTask() {
         const taskName = this.taskInput.value;
-        const result = this.taskManager.addTask(taskName);
+        this.addButton.disabled = true;
+        this.addButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
+        
+        const result = await this.taskManager.addTask(taskName);
         
         if (result.success) {
             this.taskInput.value = '';
@@ -204,6 +343,8 @@ class TaskInterface {
             this.showError(result.message);
         }
         
+        this.addButton.disabled = false;
+        this.addButton.innerHTML = '<i class="fas fa-plus"></i> Add Task';
         this.taskInput.focus();
     }
 
@@ -214,9 +355,9 @@ class TaskInterface {
     }
 
     // Delete a task
-    deleteTask(id) {
+    async deleteTask(id) {
         if (confirm('Are you sure you want to delete this task?')) {
-            const deleted = this.taskManager.deleteTask(id);
+            const deleted = await this.taskManager.deleteTask(id);
             
             if (deleted) {
                 this.renderTasks();
@@ -242,17 +383,20 @@ class TaskInterface {
         
         if (task) {
             this.editingTask = id;
-            this.editInput.value = task.name;
+            this.editInput.value = task.title;
             this.editModal.style.display = 'flex';
             this.editInput.focus();
         }
     }
 
     // Save edit changes
-    saveEdit() {
+    async saveEdit() {
         if (this.editingTask) {
             const newName = this.editInput.value;
-            const updated = this.taskManager.updateTaskName(this.editingTask, newName);
+            this.saveEditButton.disabled = true;
+            this.saveEditButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+            
+            const updated = await this.taskManager.updateTaskName(this.editingTask, newName);
             
             if (updated) {
                 this.renderTasks();
@@ -260,6 +404,9 @@ class TaskInterface {
             } else {
                 alert('Task name cannot be empty');
             }
+            
+            this.saveEditButton.disabled = false;
+            this.saveEditButton.innerHTML = '<i class="fas fa-save"></i> Save';
         }
     }
 
@@ -319,7 +466,7 @@ class TaskInterface {
         li.innerHTML = `
             <div class="task-content">
                 <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-                <span class="task-text ${task.completed ? 'completed' : ''}">${this.escapeHTML(task.name)}</span>
+                <span class="task-text ${task.completed ? 'completed' : ''}">${this.escapeHTML(task.title)}</span>
             </div>
             <div class="task-actions">
                 <button class="btn-edit" title="Edit task">
@@ -378,6 +525,11 @@ class TaskInterface {
 
 // Initialize the application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication first
+    if (!checkAuth()) {
+        return;
+    }
+
     const taskManager = new TaskManager();
     const taskInterface = new TaskInterface(taskManager);
     
