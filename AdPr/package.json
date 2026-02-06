@@ -19,7 +19,6 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.18.0"
   },
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WebbiestStew/acts-fullstack.git"
