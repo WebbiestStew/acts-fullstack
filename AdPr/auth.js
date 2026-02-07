@@ -1,5 +1,8 @@
 // API Configuration
-const API_URL = 'http://localhost:4000/api';
+// Automatically use the right API based on where the app is running
+const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:4000/api'  // Local development
+  : 'https://YOUR-BACKEND-URL.onrender.com/api';  // Production (UPDATE THIS AFTER DEPLOYING TO RENDER)
 
 // DOM Elements
 const loginForm = document.getElementById('loginForm');
