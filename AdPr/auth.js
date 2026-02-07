@@ -2,7 +2,7 @@
 // Automatically use the right API based on where the app is running
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:4000/api'  // Local development
-  : 'https://acts-fullstack.onrender.com';  // Production (UPDATE THIS AFTER DEPLOYING TO RENDER)
+  : 'https://acts-fullstack.onrender.com/api';  // Production
 
 // DOM Elements
 const loginForm = document.getElementById('loginForm');
