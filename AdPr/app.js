@@ -2,7 +2,7 @@
 // Automatically use the right API based on where the app is running
 const API_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:4000/api'  // Local development
-  : 'https://YOUR-BACKEND-URL.onrender.com/api';  // Production (UPDATE THIS AFTER DEPLOYING TO RENDER)
+  : 'https://acts-fullstack.onrender.com';  // Production (UPDATE THIS AFTER DEPLOYING TO RENDER)
 
 // Authentication Helper
 function getAuthToken() {
@@ -121,29 +121,41 @@ class TaskManager {
 
     // Delete a task by ID
     async deleteTask(id) {
+        console.log('TaskManager.deleteTask called with ID:', id);
         try {
-            const response = await fetch(`${API_URL}/items/${id}`, {
+            const url = `${API_URL}/items/${id}`;
+            console.log('DELETE request URL:', url);
+            console.log('Auth token:', getAuthToken() ? 'Present' : 'Missing');
+            
+            const response = await fetch(url, {
                 method: 'DELETE',
                 headers: this.getHeaders()
             });
 
+            console.log('DELETE response status:', response.status);
+
             if (response.status === 401) {
+                console.warn('Unauthorized - logging out');
                 logout();
                 return false;
             }
 
             if (response.ok || response.status === 204) {
+                console.log('Delete successful, removing from local array');
                 const index = this.tasks.findIndex(task => task.id === id);
                 if (index !== -1) {
                     this.tasks.splice(index, 1);
+                    console.log('Task removed from array at index:', index);
                 }
                 return true;
             } else {
                 const data = await response.json();
+                console.error('Delete failed with status:', response.status, 'Data:', data);
                 throw new Error(data.error || 'Failed to delete task');
             }
         } catch (error) {
             console.error('Error deleting task:', error);
+            alert('Failed to delete task: ' + error.message);
             return false;
         }
     }
@@ -354,14 +366,23 @@ class TaskInterface {
 
     // Delete a task
     async deleteTask(id) {
+        console.log('TaskInterface.deleteTask called with ID:', id);
         if (confirm('Are you sure you want to delete this task?')) {
+            console.log('User confirmed deletion');
             const deleted = await this.taskManager.deleteTask(id);
+            console.log('TaskManager.deleteTask returned:', deleted);
             
             if (deleted) {
+                console.log('Re-rendering UI after successful delete');
                 this.renderTasks();
                 this.updateStatistics();
                 this.updateEmptyState();
+            } else {
+                console.error('Delete operation returned false');
+                alert('Failed to delete task. Check console for details.');
             }
+        } else {
+            console.log('User cancelled deletion');
         }
     }
 
