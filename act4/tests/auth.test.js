@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import mongoose from 'mongoose';
-import server from '../server.js';
+import app from '../server.js';
 import User from '../models/User.js';
 
 describe('Authentication Routes', () => {
@@ -19,9 +19,8 @@ describe('Authentication Routes', () => {
   });
 
   afterAll(async () => {
-    // Close database connection and server
+    // Close database connection
     await mongoose.connection.close();
-    server.close();
   });
 
   describe('POST /api/auth/register', () => {
@@ -32,7 +31,7 @@ describe('Authentication Routes', () => {
         password: 'password123'
       };
 
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/register')
         .send(userData)
         .expect(201);
@@ -52,12 +51,12 @@ describe('Authentication Routes', () => {
       };
 
       // Register first user
-      await request(server)
+      await request(app)
         .post('/api/auth/register')
         .send(userData);
 
       // Try to register with same email
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/register')
         .send({
           username: 'anotheruser',
@@ -71,7 +70,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should not register user with missing fields', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/register')
         .send({
           username: 'testuser'
@@ -86,7 +85,7 @@ describe('Authentication Routes', () => {
   describe('POST /api/auth/login', () => {
     beforeEach(async () => {
       // Create a user for login tests
-      await request(server)
+      await request(app)
         .post('/api/auth/register')
         .send({
           username: 'loginuser',
@@ -96,7 +95,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should login user with correct credentials', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/login')
         .send({
           email: 'login@example.com',
@@ -110,7 +109,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should not login with incorrect password', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/login')
         .send({
           email: 'login@example.com',
@@ -123,7 +122,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should not login with non-existent email', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/login')
         .send({
           email: 'nonexistent@example.com',
@@ -136,7 +135,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should not login without email or password', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/login')
         .send({
           email: 'login@example.com'
@@ -154,7 +153,7 @@ describe('Authentication Routes', () => {
 
     beforeEach(async () => {
       // Register and get token
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/auth/register')
         .send({
           username: 'meuser',
@@ -166,7 +165,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should get current user with valid token', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/auth/me')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
@@ -177,7 +176,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should not get user without token', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/auth/me')
         .expect(401);
 
@@ -186,7 +185,7 @@ describe('Authentication Routes', () => {
     });
 
     it('should not get user with invalid token', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/auth/me')
         .set('Authorization', 'Bearer invalidtoken')
         .expect(401);

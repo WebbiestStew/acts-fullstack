@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import mongoose from 'mongoose';
-import server from '../server.js';
+import app from '../server.js';
 import User from '../models/User.js';
 import Car from '../models/Car.js';
 
@@ -23,7 +23,7 @@ describe('Car Routes', () => {
     await Car.deleteMany({});
 
     // Create a test user and get token
-    const response = await request(server)
+    const response = await request(app)
       .post('/api/auth/register')
       .send({
         username: 'caruser',
@@ -37,7 +37,6 @@ describe('Car Routes', () => {
 
   afterAll(async () => {
     await mongoose.connection.close();
-    server.close();
   });
 
   describe('POST /api/cars', () => {
@@ -54,7 +53,7 @@ describe('Car Routes', () => {
         condition: 'Used'
       };
 
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send(carData)
@@ -80,7 +79,7 @@ describe('Car Routes', () => {
         condition: 'Used'
       };
 
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/cars')
         .send(carData)
         .expect(401);
@@ -89,7 +88,7 @@ describe('Car Routes', () => {
     });
 
     it('should not create car with missing required fields', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send({
@@ -114,7 +113,7 @@ describe('Car Routes', () => {
         condition: 'Used'
       };
 
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send(carData)
@@ -127,7 +126,7 @@ describe('Car Routes', () => {
   describe('GET /api/cars', () => {
     beforeEach(async () => {
       // Create test cars
-      await request(server)
+      await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send({
@@ -142,7 +141,7 @@ describe('Car Routes', () => {
           condition: 'New'
         });
 
-      await request(server)
+      await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send({
@@ -159,7 +158,7 @@ describe('Car Routes', () => {
     });
 
     it('should get all cars', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
@@ -171,7 +170,7 @@ describe('Car Routes', () => {
     });
 
     it('should not get cars without authentication', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get('/api/cars')
         .expect(401);
 
@@ -183,7 +182,7 @@ describe('Car Routes', () => {
     let carId;
 
     beforeEach(async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send({
@@ -202,7 +201,7 @@ describe('Car Routes', () => {
     });
 
     it('should get a single car by ID', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .get(`/api/cars/${carId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
@@ -214,7 +213,7 @@ describe('Car Routes', () => {
 
     it('should return 404 for non-existent car', async () => {
       const fakeId = new mongoose.Types.ObjectId();
-      const response = await request(server)
+      const response = await request(app)
         .get(`/api/cars/${fakeId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
@@ -228,7 +227,7 @@ describe('Car Routes', () => {
     let carId;
 
     beforeEach(async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send({
@@ -252,7 +251,7 @@ describe('Car Routes', () => {
         mileage: 16000
       };
 
-      const response = await request(server)
+      const response = await request(app)
         .put(`/api/cars/${carId}`)
         .set('Authorization', `Bearer ${token}`)
         .send(updatedData)
@@ -264,7 +263,7 @@ describe('Car Routes', () => {
     });
 
     it('should not update car without authentication', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .put(`/api/cars/${carId}`)
         .send({ price: 50000 })
         .expect(401);
@@ -274,7 +273,7 @@ describe('Car Routes', () => {
 
     it('should return 404 for non-existent car update', async () => {
       const fakeId = new mongoose.Types.ObjectId();
-      const response = await request(server)
+      const response = await request(app)
         .put(`/api/cars/${fakeId}`)
         .set('Authorization', `Bearer ${token}`)
         .send({ price: 50000 })
@@ -288,7 +287,7 @@ describe('Car Routes', () => {
     let carId;
 
     beforeEach(async () => {
-      const response = await request(server)
+      const response = await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send({
@@ -307,7 +306,7 @@ describe('Car Routes', () => {
     });
 
     it('should delete a car successfully', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .delete(`/api/cars/${carId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
@@ -315,14 +314,14 @@ describe('Car Routes', () => {
       expect(response.body.success).toBe(true);
 
       // Verify car is deleted
-      const getResponse = await request(server)
+      const getResponse = await request(app)
         .get(`/api/cars/${carId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
     });
 
     it('should not delete car without authentication', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .delete(`/api/cars/${carId}`)
         .expect(401);
 
@@ -331,7 +330,7 @@ describe('Car Routes', () => {
 
     it('should return 404 for non-existent car deletion', async () => {
       const fakeId = new mongoose.Types.ObjectId();
-      const response = await request(server)
+      const response = await request(app)
         .delete(`/api/cars/${fakeId}`)
         .set('Authorization', `Bearer ${token}`)
         .expect(404);
@@ -346,7 +345,7 @@ describe('Car Routes', () => {
 
     beforeEach(async () => {
       // Create car by user 1
-      const carResponse = await request(server)
+      const carResponse = await request(app)
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send({
@@ -364,7 +363,7 @@ describe('Car Routes', () => {
       car1Id = carResponse.body.data._id;
 
       // Create second user
-      const user2Response = await request(server)
+      const user2Response = await request(app)
         .post('/api/auth/register')
         .send({
           username: 'user2',
@@ -376,7 +375,7 @@ describe('Car Routes', () => {
     });
 
     it('should not allow user to update another user\'s car', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .put(`/api/cars/${car1Id}`)
         .set('Authorization', `Bearer ${user2Token}`)
         .send({ price: 30000 })
@@ -387,7 +386,7 @@ describe('Car Routes', () => {
     });
 
     it('should not allow user to delete another user\'s car', async () => {
-      const response = await request(server)
+      const response = await request(app)
         .delete(`/api/cars/${car1Id}`)
         .set('Authorization', `Bearer ${user2Token}`)
         .expect(403);
