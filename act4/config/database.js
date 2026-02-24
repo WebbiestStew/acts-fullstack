@@ -1,12 +1,25 @@
 import mongoose from 'mongoose';
 
+let cachedConnection = null;
+
 const connectDB = async () => {
+  // Return cached connection if it exists
+  if (cachedConnection && mongoose.connection.readyState === 1) {
+    return cachedConnection;
+  }
+
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    const conn = await mongoose.connect(process.env.MONGODB_URI, {
+      bufferCommands: false,
+      maxPoolSize: 10,
+    });
+    
+    cachedConnection = conn;
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return conn;
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
+    console.error(`MongoDB Connection Error: ${error.message}`);
+    throw error; // Don't use process.exit in serverless
   }
 };
 

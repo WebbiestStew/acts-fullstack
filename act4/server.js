@@ -18,8 +18,19 @@ const __dirname = path.dirname(__filename);
 // Initialize Express app
 const app = express();
 
-// Connect to MongoDB
-connectDB();
+// Middleware to ensure database connection
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    console.error('Database connection failed:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Database connection error' 
+    });
+  }
+});
 
 // Middleware
 app.use(cors());
