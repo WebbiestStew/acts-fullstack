@@ -1,0 +1,96 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+        mongodb-version: ['6.0', '7.0']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: act4/package-lock.json
+
+    - name: Start MongoDB
+      uses: supercharge/mongodb-github-action@1.10.0
+      with:
+        mongodb-version: ${{ matrix.mongodb-version }}
+
+    - name: Install dependencies
+      working-directory: ./act4
+      run: npm ci
+
+    - name: Run tests
+      working-directory: ./act4
+      env:
+        MONGODB_URI: mongodb://localhost:27017/act4_test
+        JWT_SECRET: test_secret_key_for_ci
+        NODE_ENV: test
+      run: npm test
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./act4/coverage/lcov.info
+        flags: unittests
+        name: codecov-${{ matrix.node-version }}
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20.x'
+
+    - name: Install dependencies
+      working-directory: ./act4
+      run: npm ci
+
+    - name: Check for errors
+      working-directory: ./act4
+      run: |
+        echo "Checking for syntax errors..."
+        node --check server.js
+
+  deploy:
+    needs: [test, lint]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+        vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        working-directory: ./act4
+        vercel-args: '--prod'
+
+    - name: Deployment summary
+      run: |
+        echo "✅ Deployment successful!"
+        echo "🚀 Application deployed to production"

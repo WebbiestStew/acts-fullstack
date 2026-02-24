@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Car Inventory Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(138, 43, 226, 0.2), transparent 50%);
+            pointer-events: none;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: #2d3748;
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .navbar #username {
+            color: #4a5568;
+            font-weight: 500;
+        }
+
+        .navbar button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.4);
+        }
+
+        .navbar button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .controls {
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem 2rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .controls h2 {
+            color: #2d3748;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.875rem 2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 2rem;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .product-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+        }
+
+        .product-card h3 {
+            color: #2d3748;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .product-card p {
+            color: #718096;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .product-card .price {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 800;
+            margin: 1rem 0;
+            display: block;
+        }
+
+        .product-card .category {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            color: #667eea;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .car-details {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            border-left: 3px solid #667eea;
+        }
+
+        .car-details p {
+            margin: 0.5rem 0;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        .car-details strong {
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        .product-card .actions {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn-edit, .btn-delete {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(72, 187, 120, 0.3);
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(72, 187, 120, 0.5);
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+            box-shadow: 0 4px 10px rgba(245, 101, 101, 0.3);
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(245, 101, 101, 0.5);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 650px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px 24px 0 0;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        .modal-content h2 {
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            font-size: 1.875rem;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.625rem;
+            color: #2d3748;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+            color: #2d3748;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 1rem;
+            background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+            color: #2d3748;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.125rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-cancel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(160, 174, 192, 0.4);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #718096;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(3, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .products-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .navbar {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .navbar-right {
+                flex-direction: column;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Car Inventory Management Dashboard</h1>
+        <div class="navbar-right">
+            <span id="username"></span>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <h2>Car Inventory</h2>
+            <button class="btn-primary" onclick="openModal()">Add Car</button>
+        </div>
+
+        <div id="products-container" class="products-grid">
+            <div class="loading">Loading cars...</div>
+        </div>
+    </div>
+
+    <!-- Car Modal -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add Car</h2>
+            <form id="productForm" onsubmit="handleSubmit(event)">
+                <input type="hidden" id="productId">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="brand">Brand</label>
+                        <input type="text" id="brand" required placeholder="e.g. Toyota">
+                    </div>
+                    <div class="form-group">
+                        <label for="model">Model</label>
+                        <input type="text" id="model" required placeholder="e.g. Camry">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="year">Year</label>
+                        <input type="number" id="year" min="1900" max="2027" required placeholder="2024">
+                    </div>
+                    <div class="form-group">
+                        <label for="price">Price ($)</label>
+                        <input type="number" id="price" step="0.01" min="0" required placeholder="25000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mileage">Mileage (miles)</label>
+                        <input type="number" id="mileage" min="0" required placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="color">Color</label>
+                        <input type="text" id="color" required placeholder="e.g. Silver">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="transmission">Transmission</label>
+                        <select id="transmission" required>
+                            <option value="">Select transmission</option>
+                            <option value="Manual">Manual</option>
+                            <option value="Automatic">Automatic</option>
+                            <option value="CVT">CVT</option>
+                            <option value="Semi-Automatic">Semi-Automatic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fuelType">Fuel Type</label>
+                        <select id="fuelType" required>
+                            <option value="">Select fuel type</option>
+                            <option value="Gasoline">Gasoline</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Electric">Electric</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="Plugin-Hybrid">Plugin-Hybrid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="condition">Condition</label>
+                        <select id="condition" required>
+                            <option value="">Select condition</option>
+                            <option value="New">New</option>
+                            <option value="Used">Used</option>
+                            <option value="Certified Pre-Owned">Certified Pre-Owned</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select id="status" required>
+                            <option value="">Select status</option>
+                            <option value="Available">Available</option>
+                            <option value="Sold">Sold</option>
+                            <option value="Reserved">Reserved</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="vin">VIN (Optional)</label>
+                    <input type="text" id="vin" maxlength="17" style="text-transform: uppercase;" placeholder="17 characters">
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description (Optional)</label>
+                    <textarea id="description" rows="3" placeholder="Add any additional details about the car..."></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Car</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin + '/api';
+        let token = localStorage.getItem('token');
+        let currentEditId = null;
+
+        // Check authentication
+        if (!token) {
+            window.location.href = '/';
+        }
+
+        // Display username
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        document.getElementById('username').textContent = `Welcome, ${user.username || 'User'}`;
+
+        // Load products on page load
+        loadCars();
+
+        async function loadCars() {
+            try {
+                const response = await fetch(`${API_URL}/cars`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    displayCars(data.data);
+                } else {
+                    document.getElementById('products-container').innerHTML = 
+                        '<div class="loading">Failed to load cars</div>';
+                }
+            } catch (error) {
+                document.getElementById('products-container').innerHTML = 
+                    '<div class="loading">Error loading cars</div>';
+            }
+        }
+
+        function displayCars(cars) {
+            const container = document.getElementById('products-container');
+            
+            if (cars.length === 0) {
+                container.innerHTML = '<div class="loading">No cars found. Add your first car!</div>';
+                return;
+            }
+
+            container.innerHTML = cars.map(car => `
+                <div class="product-card">
+                    <h3>${car.brand} ${car.model} (${car.year})</h3>
+                    <p>${car.description || 'No description provided'}</p>
+                    <div class="price">$${car.price.toLocaleString()}</div>
+                    <span class="category">${car.condition}</span>
+                    <p style="margin-top: 0.5rem; color: #666;">
+                        <strong>Mileage:</strong> ${car.mileage.toLocaleString()} miles<br>
+                        <strong>Color:</strong> ${car.color}<br>
+                        <strong>Transmission:</strong> ${car.transmission}<br>
+                        <strong>Fuel:</strong> ${car.fuelType}<br>
+                        <strong>Status:</strong> ${car.status}
+                    </p>
+                    <div class="actions">
+                        <button class="btn-edit" onclick="editCar('${car._id}')">Edit</button>
+                        <button class="btn-delete" onclick="deleteCar('${car._id}')">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openModal(car = null) {
+            const modal = document.getElementById('productModal');
+            const form = document.getElementById('productForm');
+            
+            if (car) {
+                document.getElementById('modalTitle').textContent = 'Edit Car';
+                document.getElementById('productId').value = car._id;
+                document.getElementById('brand').value = car.brand;
+                document.getElementById('model').value = car.model;
+                document.getElementById('year').value = car.year;
+                document.getElementById('price').value = car.price;
+                document.getElementById('mileage').value = car.mileage;
+                document.getElementById('color').value = car.color;
+                document.getElementById('transmission').value = car.transmission;
+                document.getElementById('fuelType').value = car.fuelType;
+                document.getElementById('condition').value = car.condition;
+                document.getElementById('status').value = car.status;
+                document.getElementById('vin').value = car.vin || '';
+                document.getElementById('description').value = car.description || '';
+                currentEditId = car._id;
+            } else {
+                document.getElementById('modalTitle').textContent = 'Add Car';
+                form.reset();
+                currentEditId = null;
+            }
+            
+            modal.classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('productModal').classList.remove('show');
+            document.getElementById('productForm').reset();
+            currentEditId = null;
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            const carData = {
+                brand: document.getElementById('brand').value,
+                model: document.getElementById('model').value,
+                year: parseInt(document.getElementById('year').value),
+                price: parseFloat(document.getElementById('price').value),
+                mileage: parseInt(document.getElementById('mileage').value),
+                color: document.getElementById('color').value,
+                transmission: document.getElementById('transmission').value,
+                fuelType: document.getElementById('fuelType').value,
+                condition: document.getElementById('condition').value,
+                status: document.getElementById('status').value,
+                vin: document.getElementById('vin').value || undefined,
+                description: document.getElementById('description').value || undefined
+            };
+
+            const url = currentEditId 
+                ? `${API_URL}/cars/${currentEditId}`
+                : `${API_URL}/cars`;
+            
+            const method = currentEditId ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(carData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    closeModal();
+                    loadCars();
+                } else {
+                    alert(data.message || 'Failed to save car');
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        async function editCar(id) {
+            try {
+                const response = await fetch(`${API_URL}/cars/${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    openModal(data.data);
+                }
+            } catch (error) {
+                alert('Failed to load car details');
+            }
+        }
+
+        async function deleteCar(id) {
+            if (!confirm('Are you sure you want to delete this car?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/cars/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    loadCars();
+                } else {
+                    alert(data.message || 'Failed to delete car');
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>
