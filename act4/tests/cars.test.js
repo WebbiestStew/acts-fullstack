@@ -17,6 +17,11 @@ describe('Car Routes', () => {
     }
   });
 
+  afterAll(async () => {
+    // Close database connection
+    await mongoose.connection.close();
+  });
+
   beforeEach(async () => {
     // Clear collections
     await User.deleteMany({});
@@ -29,14 +34,11 @@ describe('Car Routes', () => {
         username: 'caruser',
         email: 'car@example.com',
         password: 'password123'
-      });
+      })
+      .expect(201);
 
     token = response.body.data.token;
     userId = response.body.data.id;
-  });
-
-  afterAll(async () => {
-    await mongoose.connection.close();
   });
 
   describe('POST /api/cars', () => {
@@ -95,7 +97,7 @@ describe('Car Routes', () => {
           brand: 'Ford'
           // Missing other required fields
         })
-        .expect(500);
+        .expect(400);
 
       expect(response.body.success).toBe(false);
     });
@@ -117,7 +119,7 @@ describe('Car Routes', () => {
         .post('/api/cars')
         .set('Authorization', `Bearer ${token}`)
         .send(carData)
-        .expect(500);
+        .expect(400);
 
       expect(response.body.success).toBe(false);
     });

@@ -18,19 +18,10 @@ const __dirname = path.dirname(__filename);
 // Initialize Express app
 const app = express();
 
-// Middleware to ensure database connection
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (error) {
-    console.error('Database connection failed:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Database connection error' 
-    });
-  }
-});
+// Connect to database on startup (cached for serverless), but not in test mode
+if (process.env.NODE_ENV !== 'test') {
+  connectDB().catch(err => console.error('Initial DB connection failed:', err));
+}
 
 // Middleware
 app.use(cors());
@@ -52,8 +43,8 @@ app.get('/', (req, res) => {
 // Error handling middleware (must be last)
 app.use(errorHandler);
 
-// Start server only in non-serverless environments
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+// Start server only in non-serverless and non-test environments
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);

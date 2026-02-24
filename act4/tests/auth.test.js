@@ -76,7 +76,7 @@ describe('Authentication Routes', () => {
           username: 'testuser'
           // Missing email and password
         })
-        .expect(500);
+        .expect(400);
 
       expect(response.body.success).toBe(false);
     });
