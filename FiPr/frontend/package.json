@@ -1,7 +1,7 @@
 {
-  "name": "taskmanager-frontend",
+  "name": "car-inventory-frontend",
   "version": "1.0.0",
-  "description": "Full Stack Task Manager - Frontend React",
+  "description": "Car Inventory - Full Stack Frontend React",
   "type": "module",
   "scripts": {
     "dev": "vite",

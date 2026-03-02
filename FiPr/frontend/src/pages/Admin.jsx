@@ -1,123 +1,198 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import carService from '../services/carService.js';
 import authService from '../services/authService.js';
-import taskService from '../services/taskService.js';
+
+const formatPrice = (p) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(p);
+const formatNum = (n) => new Intl.NumberFormat('en-US').format(n);
 
 const Admin = () => {
-  const [users, setUsers] = useState([]);
   const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [loadingStats, setLoadingStats] = useState(true);
+  const [loadingUsers, setLoadingUsers] = useState(true);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [roleLoading, setRoleLoading] = useState(null);
+  const [roleMsg, setRoleMsg] = useState('');
+  const [updatingRole, setUpdatingRole] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadStats = useCallback(async () => {
     try {
-      const [usersRes, statsRes] = await Promise.all([
-        authService.getUsers(),
-        taskService.getStats(),
-      ]);
-      setUsers(usersRes.data.users);
-      setStats(statsRes.data.data);
+      const res = await carService.getStats();
+      setStats(res.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al cargar datos');
+      setError('Failed to load stats: ' + (err.response?.data?.message || err.message));
     } finally {
-      setLoading(false);
+      setLoadingStats(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { loadData(); }, []);
+  const loadUsers = useCallback(async () => {
+    try {
+      const res = await authService.getUsers();
+      setUsers(res.data.data || []);
+    } catch (err) {
+      setError('Failed to load users: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
 
-  const handleRoleChange = async (userId, newRole) => {
-    setRoleLoading(userId);
+  useEffect(() => {
+    loadStats();
+    loadUsers();
+  }, [loadStats, loadUsers]);
+
+  const handleToggleRole = async (userId, currentRole) => {
+    const newRole = currentRole === 'admin' ? 'user' : 'admin';
+    if (!window.confirm(`Change this user rank to "${newRole}"?`)) return;
+    setUpdatingRole(userId);
     try {
       await authService.changeRole(userId, newRole);
-      setSuccess(`Rol actualizado a '${newRole}'.`);
-      setTimeout(() => setSuccess(''), 3000);
-      loadData();
+      setUsers((prev) => prev.map((u) => u._id === userId ? { ...u, role: newRole } : u));
+      setRoleMsg(`Role updated to "${newRole}".`);
+      setTimeout(() => setRoleMsg(''), 3500);
     } catch (err) {
-      alert(err.response?.data?.message || 'Error al cambiar rol');
+      setError(err.response?.data?.message || 'Failed to update role.');
     } finally {
-      setRoleLoading(null);
+      setUpdatingRole(null);
     }
   };
-
-  const getStatusCount = (status) => stats?.byStatus?.find((s) => s._id === status)?.count || 0;
-
-  if (loading) return <div className="spinner-overlay"><div className="spinner" /></div>;
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">🛠 Panel Administrativo</h1>
-          <p className="page-subtitle">Control global del sistema</p>
-        </div>
+      <div style={{ marginBottom: 28 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, marginBottom: 4 }}>Admin Panel</h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>Inventory analytics and user management</p>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
+      {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+      {roleMsg && <div className="alert alert-success" style={{ marginBottom: 16 }}>{roleMsg}</div>}
 
-      {/* System stats */}
-      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📊 Estadísticas del Sistema</h2>
-      <div className="grid-3" style={{ marginBottom: 32 }}>
-        {[
-          { label: 'Total Tareas', value: stats?.total || 0, color: '#6366f1' },
-          { label: 'Pendientes', value: getStatusCount('pending'), color: '#f59e0b' },
-          { label: 'En Progreso', value: getStatusCount('in-progress'), color: '#0ea5e9' },
-          { label: 'Completadas', value: getStatusCount('completed'), color: '#22c55e' },
-          { label: 'Canceladas', value: getStatusCount('cancelled'), color: '#94a3b8' },
-          { label: 'Usuarios Totales', value: users.length, color: '#ec4899' },
-        ].map((s) => (
-          <div key={s.label} className="card stat-card">
-            <div className="stat-num" style={{ color: s.color }}>{s.value}</div>
-            <div className="stat-label">{s.label}</div>
-          </div>
+      <div className="tab-bar">
+        {['overview', 'users'].map((t) => (
+          <button key={t} className={`tab-btn${activeTab === t ? ' active' : ''}`} onClick={() => setActiveTab(t)}>
+            {t === 'overview' ? 'Overview & Stats' : 'User Management'}
+          </button>
         ))}
       </div>
 
-      {/* Users table */}
-      <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>👥 Gestión de Usuarios ({users.length})</h2>
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th>Registrado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u._id}>
-                <td style={{ fontWeight: 600 }}>{u.name}</td>
-                <td style={{ color: 'var(--text-muted)' }}>{u.email}</td>
-                <td><span className={`badge badge-${u.role}`}>{u.role}</span></td>
-                <td>
-                  <span className={`badge ${u.active ? 'badge-completed' : 'badge-cancelled'}`}>
-                    {u.active ? 'Activo' : 'Inactivo'}
-                  </span>
-                </td>
-                <td style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                  {new Date(u.createdAt).toLocaleDateString('es-MX')}
-                </td>
-                <td>
-                  <button
-                    className={`btn btn-sm ${u.role === 'admin' ? 'btn-secondary' : 'btn-primary'}`}
-                    disabled={roleLoading === u._id}
-                    onClick={() => handleRoleChange(u._id, u.role === 'admin' ? 'user' : 'admin')}
-                  >
-                    {roleLoading === u._id ? '...' : u.role === 'admin' ? '→ User' : '→ Admin'}
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {activeTab === 'overview' && (
+        loadingStats ? (
+          <div className="spinner-overlay"><div className="spinner" /></div>
+        ) : stats ? (
+          <>
+            <div className="stats-grid" style={{ marginBottom: 28 }}>
+              <div className="stat-card color-blue">
+                <div className="stat-value">{formatNum(stats.totals?.total ?? 0)}</div>
+                <div className="stat-label">Total Vehicles</div>
+              </div>
+              <div className="stat-card color-orange">
+                <div className="stat-value">{formatPrice(stats.totals?.totalValue ?? 0)}</div>
+                <div className="stat-label">Inventory Value</div>
+              </div>
+              <div className="stat-card color-green">
+                <div className="stat-value">{formatPrice(stats.totals?.avgPrice ?? 0)}</div>
+                <div className="stat-label">Average Price</div>
+              </div>
+              <div className="stat-card color-info">
+                <div className="stat-value">{formatNum(Math.round(stats.totals?.avgMileage ?? 0))} mi</div>
+                <div className="stat-label">Average Mileage</div>
+              </div>
+            </div>
+
+            <div className="admin-grid">
+              <div className="card">
+                <div className="detail-section-title">By Status</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
+                  {(stats.byStatus || []).map((s) => (
+                    <div key={s._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className={`badge badge-${s._id}`}>{s._id}</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 700 }}>{s.count} vehicles</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>avg {formatPrice(s.avgPrice)}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!stats.byStatus || stats.byStatus.length === 0) && <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No data yet.</p>}
+                </div>
+              </div>
+
+              <div className="card">
+                <div className="detail-section-title">By Condition</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 14 }}>
+                  {(stats.byCondition || []).map((c) => (
+                    <div key={c._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className={`badge badge-${c._id}`}>{c._id}</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 700 }}>{c.count} vehicles</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>avg {formatPrice(c.avgPrice)}</div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!stats.byCondition || stats.byCondition.length === 0) && <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No data yet.</p>}
+                </div>
+              </div>
+
+              <div className="card" style={{ gridColumn: '1 / -1' }}>
+                <div className="detail-section-title">Top Makes</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 10, marginTop: 14 }}>
+                  {(stats.byMake || []).map((m, i) => (
+                    <div key={m._id} style={{ background: 'var(--bg)', borderRadius: 8, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{m._id}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>avg {formatPrice(m.avgPrice)}</div>
+                      </div>
+                      <div style={{ fontSize: 20, fontWeight: 900, color: i < 3 ? 'var(--accent)' : 'var(--text-subtle)' }}>{m.count}</div>
+                    </div>
+                  ))}
+                  {(!stats.byMake || stats.byMake.length === 0) && <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No data yet.</p>}
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="empty-state"><div className="empty-icon">📊</div><p>No stats available yet.</p></div>
+        )
+      )}
+
+      {activeTab === 'users' && (
+        <div className="card">
+          <div className="detail-section-title" style={{ marginBottom: 20 }}>All Users ({users.length})</div>
+          {loadingUsers ? (
+            <div className="spinner-overlay"><div className="spinner" /></div>
+          ) : users.length === 0 ? (
+            <div className="empty-state"><div className="empty-icon">👤</div><p>No users found.</p></div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u._id}>
+                      <td style={{ fontWeight: 600 }}>{u.name}</td>
+                      <td style={{ color: 'var(--text-muted)', fontSize: 13 }}>{u.email}</td>
+                      <td><span className={`badge badge-${u.role === 'admin' ? 'available' : 'maintenance'}`}>{u.role}</span></td>
+                      <td><span className={`badge ${u.active ? 'badge-available' : 'badge-sold'}`}>{u.active ? 'Active' : 'Disabled'}</span></td>
+                      <td>
+                        <button
+                          className={`btn btn-sm ${u.role === 'admin' ? 'btn-secondary' : 'btn-primary'}`}
+                          onClick={() => handleToggleRole(u._id, u.role)}
+                          disabled={updatingRole === u._id}
+                        >
+                          {updatingRole === u._id ? '...' : u.role === 'admin' ? 'Demote' : 'Promote'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

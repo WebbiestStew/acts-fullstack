@@ -13,15 +13,16 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <NavLink to="/dashboard" className="navbar-brand">
-        ✅ TaskManager Pro
+        <div className="brand-icon">🚗</div>
+        <div className="brand-name">Auto<span>Vault</span></div>
       </NavLink>
 
       <div className="navbar-links">
         <NavLink to="/dashboard" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
           Dashboard
         </NavLink>
-        <NavLink to="/tasks" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
-          Tareas
+        <NavLink to="/cars" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+          Inventory
         </NavLink>
         {isAdmin && (
           <NavLink to="/admin" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
@@ -30,13 +31,15 @@ const Navbar = () => {
         )}
       </div>
 
-      <div className="navbar-user">
-        <span>
-          {user?.name}{' '}
-          <span className={`badge badge-${user?.role}`}>{user?.role}</span>
-        </span>
-        <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
-          Salir
+      <div className="navbar-right">
+        <div className="navbar-user-info">
+          <div className="navbar-user-name">{user?.name}</div>
+          <div className="navbar-user-role">
+            <span className={`badge badge-${user?.role}`}>{user?.role}</span>
+          </div>
+        </div>
+        <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
+          Sign out
         </button>
       </div>
     </nav>
@@ -44,3 +47,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

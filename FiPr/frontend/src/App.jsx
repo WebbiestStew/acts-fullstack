@@ -5,9 +5,9 @@ import PrivateRoute from './components/PrivateRoute.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import Tasks from './pages/Tasks.jsx';
-import TaskDetail from './pages/TaskDetail.jsx';
-import TaskForm from './pages/TaskForm.jsx';
+import Cars from './pages/Cars.jsx';
+import CarDetail from './pages/CarDetail.jsx';
+import CarForm from './pages/CarForm.jsx';
 import Admin from './pages/Admin.jsx';
 import NotFound from './pages/NotFound.jsx';
 
@@ -19,20 +19,20 @@ function App() {
       {user && <Navbar />}
       <main className="main-content">
         <Routes>
-          {/* Públicas */}
+          {/* Public routes */}
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" replace />} />
           <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" replace />} />
 
-          {/* Privadas */}
+          {/* Protected routes */}
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/tasks/new" element={<TaskForm />} />
-            <Route path="/tasks/:id" element={<TaskDetail />} />
-            <Route path="/tasks/:id/edit" element={<TaskForm />} />
+            <Route path="/cars" element={<Cars />} />
+            <Route path="/cars/new" element={<CarForm />} />
+            <Route path="/cars/:id" element={<CarDetail />} />
+            <Route path="/cars/:id/edit" element={<CarForm />} />
           </Route>
 
-          {/* Solo admin */}
+          {/* Admin only */}
           <Route element={<PrivateRoute requiredRole="admin" />}>
             <Route path="/admin" element={<Admin />} />
           </Route>
@@ -47,3 +47,4 @@ function App() {
 }
 
 export default App;
+

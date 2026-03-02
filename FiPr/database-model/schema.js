@@ -1,93 +1,77 @@
 /**
  * ============================================================
- * TASKMANAGER PRO - MongoDB Schema Export
- * Base de datos: MongoDB (Mongoose ODM)
+ * AutoVault - Car Inventory — MongoDB Schema
+ * Database: MongoDB (Mongoose ODM)
  * ============================================================
  *
- * Colecciones:
+ * Collections:
  *   1. users
- *   2. tasks
- *
- * Para importar datos de ejemplo al iniciar el backend,
- * ejecuta: node seed.js
+ *   2. cars
+ * ============================================================
  */
 
-// ─── Colección: users ────────────────────────────────────────────────────────
-const userSchema = {
-  _id: "ObjectId (auto-generado)",
-  name: {
-    type: "String",
-    required: true,
-    minlength: 2,
-    maxlength: 50,
-  },
-  email: {
-    type: "String",
-    required: true,
-    unique: true,
-    lowercase: true,
-  },
-  password: {
-    type: "String (bcrypt hash)",
-    required: true,
-    select: false, // excluido de consultas por defecto
-  },
-  role: {
-    type: "String",
-    enum: ["user", "admin"],
-    default: "user",
-  },
-  active: {
-    type: "Boolean",
-    default: true,
-  },
-  createdAt: "Date (auto, timestamps)",
-  updatedAt: "Date (auto, timestamps)",
-};
+import mongoose from 'mongoose';
 
-// ─── Colección: tasks ────────────────────────────────────────────────────────
-const taskSchema = {
-  _id: "ObjectId (auto-generado)",
-  title: {
-    type: "String",
-    required: true,
-    minlength: 3,
-    maxlength: 100,
+// ─── User Collection ──────────────────────────
+const userSchema = new mongoose.Schema(
+  {
+    name:     { type: String,  required: true, trim: true, maxlength: 50 },
+    email:    { type: String,  required: true, unique: true, lowercase: true },
+    password: { type: String,  required: true, select: false },
+    role:     { type: String,  enum: ['user', 'admin'], default: 'user' },
+    active:   { type: Boolean, default: true },
   },
-  description: {
-    type: "String",
-    maxlength: 500,
-    default: "",
-  },
-  status: {
-    type: "String",
-    enum: ["pending", "in-progress", "completed", "cancelled"],
-    default: "pending",
-  },
-  priority: {
-    type: "String",
-    enum: ["low", "medium", "high"],
-    default: "medium",
-  },
-  category: {
-    type: "String",
-    maxlength: 50,
-    default: "General",
-  },
-  dueDate: {
-    type: "Date",
-    default: null,
-  },
-  owner: {
-    type: "ObjectId → ref: 'User'",
-    required: true,
-  },
-  assignedTo: {
-    type: "ObjectId → ref: 'User'",
-    default: null,
-  },
-  createdAt: "Date (auto, timestamps)",
-  updatedAt: "Date (auto, timestamps)",
-};
+  { timestamps: true }
+);
 
-module.exports = { userSchema, taskSchema };
+// ─── Car Collection ───────────────────────────
+const carSchema = new mongoose.Schema(
+  {
+    make:     { type: String, required: true, trim: true, maxlength: 50 },
+    model:    { type: String, required: true, trim: true, maxlength: 50 },
+    year:     { type: Number, required: true, min: 1900 },
+    color:    { type: String, required: true, trim: true },
+    price:    { type: Number, required: true, min: 0 },
+    mileage:  { type: Number, required: true, min: 0 },
+    status: {
+      type: String,
+      enum: ['available', 'sold', 'reserved', 'maintenance'],
+      default: 'available',
+    },
+    condition: {
+      type: String,
+      enum: ['new', 'used', 'certified'],
+      default: 'used',
+    },
+    fuelType: {
+      type: String,
+      enum: ['gasoline', 'diesel', 'electric', 'hybrid'],
+      default: 'gasoline',
+    },
+    transmission: {
+      type: String,
+      enum: ['automatic', 'manual'],
+      default: 'automatic',
+    },
+    vin: {
+      type: String, uppercase: true, sparse: true, unique: true,
+      match: [/^[A-HJ-NPR-Z0-9]{17}$/, 'VIN must be exactly 17 characters'],
+    },
+    description: { type: String, maxlength: 1000 },
+    features:    [{ type: String }],
+    addedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
+
+carSchema.index({ status: 1, make: 1 });
+carSchema.index({ price: 1 });
+carSchema.index({ year: -1 });
+carSchema.index({ make: 'text', model: 'text', description: 'text' });
+
+export const User = mongoose.model('User', userSchema);
+export const Car  = mongoose.model('Car',  carSchema);

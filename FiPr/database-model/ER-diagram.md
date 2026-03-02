@@ -1,110 +1,54 @@
-# Modelo de Datos – TaskManager Pro
+# AutoVault — ER Diagram
 
-Base de datos: **MongoDB** con **Mongoose ODM**
+## Entities
 
----
+### User
+| Field     | Type     | Constraints                        |
+|-----------|----------|------------------------------------|
+| _id       | ObjectId | PK, auto-generated                 |
+| name      | String   | required, max 50                   |
+| email     | String   | required, unique, lowercase        |
+| password  | String   | required, bcrypt hashed            |
+| role      | String   | enum: user/admin, default: user    |
+| active    | Boolean  | default: true                      |
+| createdAt | Date     | auto                               |
+| updatedAt | Date     | auto                               |
 
-## Diagrama de Relaciones (ER)
+### Car
+| Field        | Type     | Constraints                                            |
+|--------------|----------|--------------------------------------------------------|
+| _id          | ObjectId | PK, auto-generated                                     |
+| make         | String   | required, max 50                                       |
+| model        | String   | required, max 50                                       |
+| year         | Number   | required, min 1900                                     |
+| color        | String   | required                                               |
+| price        | Number   | required, min 0                                        |
+| mileage      | Number   | required, min 0                                        |
+| status       | String   | enum: available/sold/reserved/maintenance; default: available |
+| condition    | String   | enum: new/used/certified; default: used                |
+| fuelType     | String   | enum: gasoline/diesel/electric/hybrid; default: gasoline |
+| transmission | String   | enum: automatic/manual; default: automatic             |
+| vin          | String   | optional, unique, 17 chars, uppercase                  |
+| description  | String   | optional, max 1000                                     |
+| features     | [String] | optional array of feature strings                      |
+| addedBy      | ObjectId | FK → User._id, required                               |
+| createdAt    | Date     | auto                                                   |
+| updatedAt    | Date     | auto                                                   |
+
+## Relationships
 
 ```
-┌─────────────────────────────────────┐
-│               USERS                  │
-├──────────────────┬──────────────────┤
-│ _id              │ ObjectId (PK)    │
-│ name             │ String           │
-│ email            │ String (unique)  │
-│ password         │ String (hash)    │
-│ role             │ user | admin     │
-│ active           │ Boolean          │
-│ createdAt        │ Date             │
-│ updatedAt        │ Date             │
-└──────────────────┴──────────────────┘
-         │ 1                    │ 1
-         │ owner                │ assignedTo
-         │ (required)           │ (opcional)
-         ▼ *                    ▼ *
-┌─────────────────────────────────────┐
-│               TASKS                  │
-├──────────────────┬──────────────────┤
-│ _id              │ ObjectId (PK)    │
-│ title            │ String           │
-│ description      │ String           │
-│ status           │ pending |        │
-│                  │ in-progress |    │
-│                  │ completed |      │
-│                  │ cancelled        │
-│ priority         │ low | medium |   │
-│                  │ high             │
-│ category         │ String           │
-│ dueDate          │ Date (opcional)  │
-│ owner            │ ObjectId → User  │
-│ assignedTo       │ ObjectId → User  │
-│ createdAt        │ Date             │
-│ updatedAt        │ Date             │
-└──────────────────┴──────────────────┘
+User ──< Car
+(one user can add many cars; each car has one owner)
+
+User.role = 'admin' → can see and manage ALL cars
+User.role = 'user'  → can only see and manage their own cars
 ```
 
----
+## Indexes
 
-## Relaciones
-
-| Relación          | Tipo  | Descripción                                         |
-|-------------------|-------|-----------------------------------------------------|
-| User → Tasks      | 1:N   | Un usuario puede tener múltiples tareas (owner)     |
-| User → Tasks      | 1:N   | Un usuario puede ser asignado a múltiples tareas    |
-| Task → User       | N:1   | Cada tarea pertenece a exactamente un usuario       |
-
----
-
-## Índices en MongoDB
-
-```javascript
-// Colección tasks
-{ owner: 1, status: 1 }          // búsquedas filtradas por usuario y estado
-{ title: 'text', description: 'text' }  // búsqueda full-text
-```
-
----
-
-## Valores permitidos
-
-### `tasks.status`
-| Valor        | Descripción            |
-|--------------|------------------------|
-| `pending`    | Tarea creada, sin iniciar |
-| `in-progress`| Tarea en proceso       |
-| `completed`  | Tarea finalizada       |
-| `cancelled`  | Tarea cancelada        |
-
-### `tasks.priority`
-| Valor    | Descripción       |
-|----------|-------------------|
-| `low`    | Baja prioridad    |
-| `medium` | Prioridad media   |
-| `high`   | Alta prioridad    |
-
-### `users.role`
-| Valor   | Descripción                              |
-|---------|------------------------------------------|
-| `user`  | Usuario estándar, solo ve sus tareas     |
-| `admin` | Administrador, acceso total al sistema   |
-
----
-
-## Datos de ejemplo (seed)
-
-```json
-// users
-[
-  { "name": "Admin Principal", "email": "admin@taskmanager.com", "password": "admin1234", "role": "admin" },
-  { "name": "Usuario Demo",    "email": "user@taskmanager.com",  "password": "user1234",  "role": "user" }
-]
-
-// tasks
-[
-  { "title": "Configurar servidor Express",  "priority": "high",   "status": "completed", "category": "Backend"  },
-  { "title": "Diseñar interfaz de usuario",  "priority": "medium", "status": "in-progress","category": "Frontend" },
-  { "title": "Escribir pruebas Jest",        "priority": "high",   "status": "pending",    "category": "Testing"  },
-  { "title": "Documentar API REST",          "priority": "low",    "status": "pending",    "category": "Docs"     }
-]
-```
+- `Car`: `{ status, make }` — for status+make filter queries
+- `Car`: `{ price }` — for price range queries
+- `Car`: `{ year }` — for year range sort/filter
+- `Car`: text index on `make`, `model`, `description` — for keyword search
+- `Car.vin`: unique + sparse — allows null but enforces uniqueness when set

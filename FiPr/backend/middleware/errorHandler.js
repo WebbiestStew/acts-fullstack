@@ -1,14 +1,14 @@
 /**
- * Middleware global de manejo de errores
+ * Global error handling middleware
  */
 const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || 500;
-  let message = err.message || 'Error interno del servidor';
+  let message = err.message || 'Internal server error';
 
   // Mongoose: duplicate key
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue)[0];
-    message = `El campo '${field}' ya existe con ese valor.`;
+    message = `The field '${field}' already exists with that value.`;
     statusCode = 409;
   }
 
@@ -22,18 +22,18 @@ const errorHandler = (err, req, res, next) => {
 
   // Mongoose: CastError (invalid ObjectId)
   if (err.name === 'CastError') {
-    message = `ID inválido: ${err.value}`;
+    message = `Invalid ID: ${err.value}`;
     statusCode = 400;
   }
 
   // JWT
   if (err.name === 'JsonWebTokenError') {
-    message = 'Token inválido.';
+    message = 'Invalid token.';
     statusCode = 401;
   }
 
   if (err.name === 'TokenExpiredError') {
-    message = 'Token expirado.';
+    message = 'Token has expired.';
     statusCode = 401;
   }
 

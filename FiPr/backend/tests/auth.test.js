@@ -1,18 +1,18 @@
 /**
  * ============================================================
- * PRUEBAS AUTOMATIZADAS - AUTENTICACIÓN (auth.test.js)
+ * AUTOMATED TESTS - AUTHENTICATION (auth.test.js)
  * ============================================================
- * Cubre:
- *  1. Registro exitoso
- *  2. Registro con email duplicado
- *  3. Registro con datos inválidos (validación fallida)
- *  4. Login exitoso
- *  5. Login con contraseña incorrecta
- *  6. Login con email no registrado
- *  7. Acceso a ruta protegida con token válido
- *  8. Acceso denegado sin token
- *  9. Acceso denegado por rol insuficiente
- * 10. Cambio de rol por admin
+ * Covers:
+ *  1. Successful registration
+ *  2. Duplicate email registration
+ *  3. Invalid data registration (validation failure)
+ *  4. Successful login
+ *  5. Login with wrong password
+ *  6. Login with unregistered email
+ *  7. Access allowed with valid token
+ *  8. Access denied without token
+ *  9. Access denied by insufficient role
+ * 10. Admin can change user role
  */
 
 const request = require('supertest');
@@ -52,8 +52,8 @@ const loginUser = (email = 'user@test.com', password = 'password123') =>
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
-describe('AUTH - Registro', () => {
-  test('1. Registro exitoso devuelve 201 y token JWT', async () => {
+describe('AUTH - Registration', () => {
+  test('1. Successful registration returns 201 and JWT token', async () => {
     const res = await registerUser();
 
     expect(res.statusCode).toBe(201);
@@ -61,23 +61,23 @@ describe('AUTH - Registro', () => {
     expect(res.body.token).toBeDefined();
     expect(typeof res.body.token).toBe('string');
     expect(res.body.user.email).toBe('user@test.com');
-    expect(res.body.user.password).toBeUndefined(); // No exponer contraseña
+    expect(res.body.user.password).toBeUndefined();
   });
 
-  test('2. Registro con email duplicado devuelve 409', async () => {
-    await registerUser(); // Primer registro
-    const res = await registerUser(); // Segundo registro con mismo email
+  test('2. Duplicate email registration returns 409', async () => {
+    await registerUser();
+    const res = await registerUser();
 
     expect(res.statusCode).toBe(409);
     expect(res.body.success).toBe(false);
-    expect(res.body.message).toMatch(/email ya está registrado/i);
+    expect(res.body.message).toMatch(/email is already registered/i);
   });
 
-  test('3. Registro con datos inválidos devuelve 422 (validación fallida)', async () => {
+  test('3. Registration with invalid data returns 422 (validation failure)', async () => {
     const res = await request(app).post('/api/auth/register').send({
-      name: 'A', // demasiado corto
-      email: 'correo-invalido', // no es email
-      password: '123', // muy corta
+      name: 'A',
+      email: 'invalid-email',
+      password: '123',
     });
 
     expect(res.statusCode).toBe(422);
@@ -92,7 +92,7 @@ describe('AUTH - Login', () => {
     await registerUser();
   });
 
-  test('4. Login exitoso devuelve 200, token y datos del usuario', async () => {
+  test('4. Successful login returns 200, token and user data', async () => {
     const res = await loginUser();
 
     expect(res.statusCode).toBe(200);
@@ -103,34 +103,31 @@ describe('AUTH - Login', () => {
     expect(res.body.user.password).toBeUndefined();
   });
 
-  test('5. Login con contraseña incorrecta devuelve 401', async () => {
+  test('5. Login with wrong password returns 401', async () => {
     const res = await loginUser('user@test.com', 'wrongpassword');
 
     expect(res.statusCode).toBe(401);
     expect(res.body.success).toBe(false);
-    expect(res.body.message).toMatch(/credenciales inválidas/i);
+    expect(res.body.message).toMatch(/invalid credentials/i);
   });
 
-  test('6. Login con email no registrado devuelve 401', async () => {
-    const res = await loginUser('noexiste@test.com');
+  test('6. Login with unregistered email returns 401', async () => {
+    const res = await loginUser('notfound@test.com');
 
     expect(res.statusCode).toBe(401);
     expect(res.body.success).toBe(false);
   });
 });
 
-describe('AUTH - Protección de rutas y roles', () => {
+describe('AUTH - Route protection and roles', () => {
   beforeEach(async () => {
-    // Registrar y logear usuario normal
     await registerUser();
     const loginRes = await loginUser();
     userToken = loginRes.body.token;
     userId = loginRes.body.user._id;
 
-    // Registrar admin (simulando que el campo viene del body pero el router lo bloquea)
-    // Creamos admin directamente con el modelo
     const User = require('../models/User');
-    const admin = await User.create({
+    await User.create({
       name: 'Admin',
       email: 'admin@test.com',
       password: 'admin1234',
@@ -140,7 +137,7 @@ describe('AUTH - Protección de rutas y roles', () => {
     adminToken = adminLogin.body.token;
   });
 
-  test('7. Acceso permitido a /api/auth/me con token válido devuelve 200', async () => {
+  test('7. Access allowed to /api/auth/me with valid token returns 200', async () => {
     const res = await request(app)
       .get('/api/auth/me')
       .set('Authorization', `Bearer ${userToken}`);
@@ -150,24 +147,24 @@ describe('AUTH - Protección de rutas y roles', () => {
     expect(res.body.user.email).toBe('user@test.com');
   });
 
-  test('8. Acceso denegado a /api/auth/me sin token devuelve 401', async () => {
+  test('8. Access denied to /api/auth/me without token returns 401', async () => {
     const res = await request(app).get('/api/auth/me');
 
     expect(res.statusCode).toBe(401);
     expect(res.body.success).toBe(false);
   });
 
-  test('9. Acceso denegado a /api/auth/users por rol insuficiente devuelve 403', async () => {
+  test('9. Access denied to /api/auth/users by insufficient role returns 403', async () => {
     const res = await request(app)
       .get('/api/auth/users')
       .set('Authorization', `Bearer ${userToken}`);
 
     expect(res.statusCode).toBe(403);
     expect(res.body.success).toBe(false);
-    expect(res.body.message).toMatch(/rol/i);
+    expect(res.body.message).toMatch(/role/i);
   });
 
-  test('10. Admin puede acceder a /api/auth/users y listar usuarios', async () => {
+  test('10. Admin can access /api/auth/users and list all users', async () => {
     const res = await request(app)
       .get('/api/auth/users')
       .set('Authorization', `Bearer ${adminToken}`);

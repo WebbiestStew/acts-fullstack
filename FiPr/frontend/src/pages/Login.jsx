@@ -19,7 +19,7 @@ const Login = () => {
       await login(form);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Error al iniciar sesión');
+      setError(err.response?.data?.message || 'Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -29,30 +29,32 @@ const Login = () => {
     <div className="auth-page">
       <div className="auth-card card">
         <div className="auth-logo">
-          <h1>✅ TaskManager Pro</h1>
-          <p>Sistema de gestión de tareas</p>
+          <div className="auth-logo-icon">🚗</div>
+          <h1>Auto<span>Vault</span></h1>
+          <p>Car Inventory Management System</p>
         </div>
 
-        <h2 style={{ marginBottom: 20, fontSize: 20 }}>Iniciar Sesión</h2>
+        <h2 style={{ marginBottom: 22, fontSize: 20, fontWeight: 700 }}>Sign In</h2>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && <div className="alert alert-error">⚠️ {error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Email</label>
+            <label>Email Address</label>
             <input
               className="form-control"
               type="email"
               name="email"
-              placeholder="tu@email.com"
+              placeholder="you@example.com"
               value={form.email}
               onChange={handleChange}
               required
               autoComplete="email"
+              autoFocus
             />
           </div>
           <div className="form-group">
-            <label>Contraseña</label>
+            <label>Password</label>
             <input
               className="form-control"
               type="password"
@@ -64,13 +66,18 @@ const Login = () => {
               autoComplete="current-password"
             />
           </div>
-          <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} disabled={loading}>
-            {loading ? 'Iniciando...' : 'Iniciar Sesión'}
+          <button
+            className="btn btn-primary btn-lg"
+            style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 
+        <div className="auth-divider" />
         <div className="auth-footer">
-          ¿No tienes cuenta? <Link to="/register">Regístrate</Link>
+          Don’t have an account? <Link to="/register">Create one</Link>
         </div>
       </div>
     </div>

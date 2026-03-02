@@ -1,38 +1,44 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import taskService from '../services/taskService.js';
+import carService from '../services/carService.js';
+
+const formatPrice = (price) =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(price);
 
 const Dashboard = () => {
   const { user, isAdmin } = useAuth();
   const [stats, setStats] = useState(null);
-  const [recentTasks, setRecentTasks] = useState([]);
+  const [recentCars, setRecentCars] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const statusLabels = {
-    pending: 'Pendientes',
-    'in-progress': 'En Progreso',
-    completed: 'Completadas',
-    cancelled: 'Canceladas',
-  };
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [tasksRes, statsRes] = await Promise.all([
-          taskService.getTasks({ limit: 4, sortBy: 'createdAt', sortOrder: 'desc' }),
-          isAdmin ? taskService.getStats() : Promise.resolve(null),
+        const [carsRes, statsRes] = await Promise.all([
+          carService.getCars({ limit: 6, sortBy: 'createdAt', sortOrder: 'desc' }),
+          isAdmin ? carService.getStats() : Promise.resolve(null),
         ]);
-        setRecentTasks(tasksRes.data.data);
-        if (statsRes) setStats(statsRes.data.data);
-        else {
-          // Build local stats for non-admin
-          const allRes = await taskService.getTasks({ limit: 100 });
-          const byStatus = {};
-          allRes.data.data.forEach((t) => {
-            byStatus[t.status] = (byStatus[t.status] || 0) + 1;
+
+        setRecentCars(carsRes.data.data);
+
+        if (statsRes) {
+          setStats(statsRes.data.data);
+        } else {
+          // Build basic stats for regular user from their own cars
+          const allRes = await carService.getCars({ limit: 100 });
+          const cars = allRes.data.data;
+          const byStatus = cars.reduce((acc, c) => {
+            acc[c.status] = (acc[c.status] || 0) + 1;
+            return acc;
+          }, {});
+          const totalValue = cars.reduce((sum, c) => sum + c.price, 0);
+          setStats({
+            totals: { total: allRes.data.pagination.total, totalValue, avgPrice: totalValue / (cars.length || 1) },
+            byStatus: Object.entries(byStatus).map(([_id, count]) => ({ _id, count })),
+            byMake: [],
+            byCondition: [],
           });
-          setStats({ total: allRes.data.pagination.total, byStatus: Object.entries(byStatus).map(([_id, count]) => ({ _id, count })) });
         }
       } catch (e) {
         console.error(e);
@@ -47,54 +53,100 @@ const Dashboard = () => {
 
   const getCount = (status) => stats?.byStatus?.find((s) => s._id === status)?.count || 0;
 
+  const statCards = [
+    { label: 'Available', value: getCount('available'), color: 'color-green', icon: '✅' },
+    { label: 'Reserved', value: getCount('reserved'),  color: 'color-yellow', icon: '🔒' },
+    { label: 'Sold',      value: getCount('sold'),      color: 'color-info',   icon: '🏷️' },
+    {
+      label: 'Total Value',
+      value: stats?.totals?.totalValue ? formatPrice(stats.totals.totalValue) : '$0',
+      color: 'color-orange',
+      icon: '💰',
+    },
+  ];
+
   return (
     <div>
+      {/* Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">👋 Hola, {user?.name}</h1>
-          <p className="page-subtitle">Aquí tienes un resumen de tus tareas</p>
+          <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
+          <p className="page-subtitle">Here's your inventory overview</p>
         </div>
-        <Link to="/tasks/new" className="btn btn-primary">+ Nueva Tarea</Link>
+        <Link to="/cars/new" className="btn btn-accent">+ Add Vehicle</Link>
       </div>
 
       {/* Stats */}
-      <div className="grid-3" style={{ marginBottom: 28 }}>
-        {[
-          { key: 'pending', num: getCount('pending'), label: 'Pendientes', color: '#f59e0b' },
-          { key: 'in-progress', num: getCount('in-progress'), label: 'En Progreso', color: '#0ea5e9' },
-          { key: 'completed', num: getCount('completed'), label: 'Completadas', color: '#22c55e' },
-          { key: 'total', num: stats?.total || 0, label: 'Total', color: '#6366f1' },
-        ].map((s) => (
-          <div key={s.key} className="card stat-card">
-            <div className="stat-num" style={{ color: s.color }}>{s.num}</div>
+      <div className="grid-4" style={{ marginBottom: 32 }}>
+        {statCards.map((s) => (
+          <div key={s.label} className={`card stat-card ${s.color}`}>
+            <div className="stat-icon">{s.icon}</div>
+            <div className="stat-num">{s.value}</div>
             <div className="stat-label">{s.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Recent tasks */}
-      <div className="page-header" style={{ marginBottom: 16 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Tareas Recientes</h2>
-        <Link to="/tasks" className="btn btn-secondary btn-sm">Ver todas →</Link>
+      {/* Quick info row */}
+      {isAdmin && stats?.totals && (
+        <div className="card" style={{ marginBottom: 28, display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: 700 }}>Total Vehicles</div>
+            <div style={{ fontSize: 26, fontWeight: 800, marginTop: 4 }}>{stats.totals.total}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: 700 }}>Avg. Price</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--accent)', marginTop: 4 }}>{formatPrice(stats.totals.avgPrice)}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: 700 }}>Inventory Value</div>
+            <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--success)', marginTop: 4 }}>{formatPrice(stats.totals.totalValue)}</div>
+          </div>
+          {stats?.byMake?.length > 0 && (
+            <div style={{ marginLeft: 'auto' }}>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '.5px', fontWeight: 700, marginBottom: 8 }}>Top Makes</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {stats.byMake.slice(0, 5).map((m) => (
+                  <span key={m._id} className="feature-tag">{m._id} ({m.count})</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Recent listings */}
+      <div className="page-header" style={{ marginBottom: 18 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700 }}>Recent Listings</h2>
+        <Link to="/cars" className="btn btn-secondary btn-sm">View all →</Link>
       </div>
 
-      {recentTasks.length === 0 ? (
+      {recentCars.length === 0 ? (
         <div className="card empty-state">
-          <h3>Sin tareas todavía</h3>
-          <p>Crea tu primera tarea para empezar a organizar tu trabajo.</p>
-          <Link to="/tasks/new" className="btn btn-primary">+ Crear primera tarea</Link>
+          <div className="empty-state-icon">🚗</div>
+          <h3>No vehicles yet</h3>
+          <p>Add your first vehicle to start building your inventory.</p>
+          <Link to="/cars/new" className="btn btn-accent">+ Add First Vehicle</Link>
         </div>
       ) : (
         <div className="grid-2">
-          {recentTasks.map((task) => (
-            <Link to={`/tasks/${task._id}`} key={task._id} style={{ textDecoration: 'none' }}>
-              <div className="card task-card">
-                <div className="task-card-header">
-                  <div className="task-card-title">{task.title}</div>
-                  <span className={`badge badge-${task.priority}`}>{task.priority}</span>
+          {recentCars.map((car) => (
+            <Link to={`/cars/${car._id}`} key={car._id} style={{ textDecoration: 'none' }}>
+              <div className="card car-card">
+                <div className="car-card-header">
+                  <div>
+                    <div className="car-card-title">{car.year} {car.make} {car.model}</div>
+                    <div className="car-card-year">{car.color} · {car.transmission}</div>
+                  </div>
+                  <span className={`badge badge-${car.status}`}>{car.status}</span>
                 </div>
-                <div className="task-card-footer">
-                  <span className={`badge badge-${task.status}`}>{statusLabels[task.status]}</span>
+                <div className="car-card-price">{formatPrice(car.price)}</div>
+                <div className="car-card-footer">
+                  <span className={`badge badge-${car.condition}`}>{car.condition}</span>
+                  <span className={`badge badge-${car.fuelType}`}>{car.fuelType}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-muted)' }}>
+                    {new Intl.NumberFormat('en-US').format(car.mileage)} mi
+                  </span>
                 </div>
               </div>
             </Link>

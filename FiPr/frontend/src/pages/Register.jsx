@@ -15,7 +15,10 @@ const Register = () => {
     e.preventDefault();
     setError('');
     if (form.password !== form.confirm) {
-      return setError('Las contraseñas no coinciden.');
+      return setError('Passwords do not match.');
+    }
+    if (form.password.length < 6) {
+      return setError('Password must be at least 6 characters.');
     }
     setLoading(true);
     try {
@@ -24,7 +27,7 @@ const Register = () => {
     } catch (err) {
       const msg = err.response?.data?.message;
       const errs = err.response?.data?.errors;
-      setError(errs ? errs.map((e) => e.message).join(', ') : msg || 'Error al registrarse');
+      setError(errs ? errs.map((e) => e.message).join(', ') : msg || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -34,38 +37,50 @@ const Register = () => {
     <div className="auth-page">
       <div className="auth-card card">
         <div className="auth-logo">
-          <h1>✅ TaskManager Pro</h1>
-          <p>Crea tu cuenta gratis</p>
+          <div className="auth-logo-icon">🚗</div>
+          <h1>Auto<span>Vault</span></h1>
+          <p>Create your free account</p>
         </div>
 
-        <h2 style={{ marginBottom: 20, fontSize: 20 }}>Registro</h2>
+        <h2 style={{ marginBottom: 22, fontSize: 20, fontWeight: 700 }}>Create Account</h2>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && <div className="alert alert-error">⚠️ {error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Nombre completo</label>
-            <input className="form-control" type="text" name="name" placeholder="Tu nombre" value={form.name} onChange={handleChange} required />
+            <label>Full Name</label>
+            <input className="form-control" type="text" name="name" placeholder="Your full name"
+              value={form.name} onChange={handleChange} required autoFocus />
           </div>
           <div className="form-group">
-            <label>Email</label>
-            <input className="form-control" type="email" name="email" placeholder="tu@email.com" value={form.email} onChange={handleChange} required />
+            <label>Email Address</label>
+            <input className="form-control" type="email" name="email" placeholder="you@example.com"
+              value={form.email} onChange={handleChange} required />
           </div>
-          <div className="form-group">
-            <label>Contraseña</label>
-            <input className="form-control" type="password" name="password" placeholder="Mínimo 6 caracteres" value={form.password} onChange={handleChange} required />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Password</label>
+              <input className="form-control" type="password" name="password" placeholder="Min. 6 characters"
+                value={form.password} onChange={handleChange} required />
+            </div>
+            <div className="form-group">
+              <label>Confirm Password</label>
+              <input className="form-control" type="password" name="confirm" placeholder="Repeat password"
+                value={form.confirm} onChange={handleChange} required />
+            </div>
           </div>
-          <div className="form-group">
-            <label>Confirmar contraseña</label>
-            <input className="form-control" type="password" name="confirm" placeholder="Repite la contraseña" value={form.confirm} onChange={handleChange} required />
-          </div>
-          <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} disabled={loading}>
-            {loading ? 'Registrando...' : 'Crear Cuenta'}
+          <button
+            className="btn btn-primary btn-lg"
+            style={{ width: '100%', justifyContent: 'center', marginTop: 8 }}
+            disabled={loading}
+          >
+            {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
 
+        <div className="auth-divider" />
         <div className="auth-footer">
-          ¿Ya tienes cuenta? <Link to="/login">Inicia sesión</Link>
+          Already have an account? <Link to="/login">Sign in</Link>
         </div>
       </div>
     </div>

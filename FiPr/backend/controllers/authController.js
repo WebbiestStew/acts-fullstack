@@ -19,10 +19,10 @@ const register = async (req, res, next) => {
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(409).json({ success: false, message: 'El email ya está registrado.' });
+      return res.status(409).json({ success: false, message: 'Email is already registered.' });
     }
 
-    // Solo los admins pueden crear otros admins
+    // Only admins can create other admins via role change endpoint
     const assignedRole = role === 'admin' ? 'user' : (role || 'user');
 
     const user = await User.create({ name, email, password, role: assignedRole });
@@ -30,7 +30,7 @@ const register = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Usuario registrado exitosamente.',
+      message: 'User registered successfully.',
       token,
       user,
     });
@@ -48,16 +48,16 @@ const login = async (req, res, next) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email y contraseña son requeridos.' });
+      return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
     const user = await User.findOne({ email }).select('+password');
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ success: false, message: 'Credenciales inválidas.' });
+      return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
 
     if (!user.active) {
-      return res.status(401).json({ success: false, message: 'Cuenta desactivada.' });
+      return res.status(401).json({ success: false, message: 'Account is disabled.' });
     }
 
     const token = signToken(user._id);
@@ -67,7 +67,7 @@ const login = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: 'Login exitoso.',
+      message: 'Login successful.',
       token,
       user,
     });
@@ -94,7 +94,7 @@ const getMe = async (req, res, next) => {
  */
 const getAllUsers = async (req, res, next) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 });
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: users.length, users });
   } catch (error) {
     next(error);
@@ -109,13 +109,13 @@ const changeUserRole = async (req, res, next) => {
   try {
     const { role } = req.body;
     if (!['user', 'admin'].includes(role)) {
-      return res.status(400).json({ success: false, message: 'Rol inválido.' });
+      return res.status(400).json({ success: false, message: 'Invalid role.' });
     }
     const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true, runValidators: true });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'Usuario no encontrado.' });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
-    res.status(200).json({ success: true, message: 'Rol actualizado.', user });
+    res.status(200).json({ success: true, message: 'Role updated successfully.', user });
   } catch (error) {
     next(error);
   }

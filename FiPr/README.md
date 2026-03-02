@@ -1,148 +1,145 @@
-# TaskManager Pro – Proyecto Final Integrador
+# AutoVault — Car Inventory System
 
-Aplicación Full Stack profesional de gestión de tareas con autenticación JWT, autorización por roles, CRUD completo y pruebas automatizadas.
-
----
-
-## Estructura del Repositorio
-
-```
-FiPr/
-├── backend/          # API REST Node.js + Express + MongoDB
-├── frontend/         # SPA React + Vite
-└── database-model/   # Esquemas MongoDB + Diagrama ER
-```
+A full-stack car inventory management application built with **Node.js + Express + MongoDB** (backend) and **React + Vite** (frontend).
 
 ---
 
-## Tecnologías
+## Features
 
-| Capa         | Tecnología                          |
-|--------------|-------------------------------------|
-| Frontend     | React 18, Vite, React Router v6     |
-| Backend      | Node.js, Express 4                  |
-| Base de datos| MongoDB + Mongoose                  |
-| Autenticación| JWT (jsonwebtoken) + bcryptjs       |
-| Validación   | express-validator                   |
-| Pruebas      | Jest + Supertest + mongodb-memory-server |
-| HTTP Client  | Axios                               |
+- JWT authentication with role-based access (user / admin)
+- Full CRUD for car listings
+- Advanced filter & search: make, status, condition, fuel type, price/year range, keyword
+- Pagination support on all list endpoints
+- Admin panel: inventory analytics, user management, role promotion/demotion
+- Responsive dark-themed UI (no excessive gradients)
+- 10+ Jest integration tests
 
 ---
 
-## Instalación y Ejecución
+## Tech Stack
 
-### Requisitos previos
-- Node.js v18+
-- MongoDB local **o** cuenta de MongoDB Atlas (gratuita)
+| Layer    | Technology                              |
+|----------|-----------------------------------------|
+| Backend  | Node.js 20, Express 4, Mongoose 8       |
+| Database | MongoDB 7                               |
+| Auth     | JWT (jsonwebtoken), bcryptjs            |
+| Frontend | React 18, Vite 5, React Router v6, Axios|
+| Testing  | Jest 29, supertest, mongodb-memory-server|
 
-### 1. Backend
+---
+
+## Quick Start
+
+### Prerequisites
+- Node.js 18+
+- MongoDB running locally on `mongodb://localhost:27017`
+
+### Backend
 
 ```bash
 cd backend
 npm install
-cp .env.example .env
-# Editar .env con tu MONGO_URI y JWT_SECRET
-npm run dev          # Inicia en http://localhost:3000
+cp .env.example .env   # edit JWT_SECRET if needed
+npm run seed           # optional: seed sample data
+npm start
 ```
 
-**Opcional – poblar datos de ejemplo:**
-```bash
-node seed.js
-```
+Backend runs on `http://localhost:3000`.
 
-### 2. Frontend
+### Frontend
 
 ```bash
 cd frontend
 npm install
-npm run dev          # Inicia en http://localhost:5173
+# create frontend/.env with: VITE_API_URL=http://localhost:3000/api
+npm run dev
 ```
 
-### 3. Pruebas automatizadas
+Frontend runs on `http://localhost:5173`.
+
+### Tests
 
 ```bash
 cd backend
-npm test             # Corre las 20 pruebas Jest
-npm run test:coverage  # Con reporte de cobertura
+npm test
 ```
 
 ---
 
-## Credenciales de prueba (tras ejecutar seed.js)
+## API Endpoints
 
-| Rol   | Email                        | Contraseña  |
-|-------|------------------------------|-------------|
-| Admin | admin@taskmanager.com        | admin1234   |
-| User  | user@taskmanager.com         | user1234    |
+### Auth  (`/api/auth`)
+
+| Method | Endpoint              | Auth     | Description            |
+|--------|-----------------------|----------|------------------------|
+| POST   | /register             | —        | Create account         |
+| POST   | /login                | —        | Login, receive token   |
+| GET    | /me                   | user     | Get current user       |
+| GET    | /users                | admin    | List all users         |
+| PATCH  | /users/:id/role       | admin    | Update user role       |
+
+### Cars  (`/api/cars`)
+
+| Method | Endpoint              | Auth     | Description                        |
+|--------|-----------------------|----------|------------------------------------|
+| GET    | /                     | user     | List cars (paginated, filterable)  |
+| GET    | /stats                | admin    | Inventory analytics                |
+| GET    | /:id                  | user     | Get single car                     |
+| POST   | /                     | user     | Create car listing                 |
+| PUT    | /:id                  | user     | Update car (owner or admin)        |
+| PATCH  | /:id/status           | user     | Update car status                  |
+| DELETE | /:id                  | user     | Delete car (owner or admin)        |
+
+### Query Parameters for `GET /api/cars`
+
+| Param       | Example            | Description                    |
+|-------------|--------------------|--------------------------------|
+| page        | `?page=2`          | Page number (default: 1)       |
+| limit       | `?limit=10`        | Items per page (default: 12)   |
+| status      | `?status=available`| Filter by status               |
+| condition   | `?condition=new`   | Filter by condition            |
+| fuelType    | `?fuelType=electric`| Filter by fuel type           |
+| transmission| `?transmission=manual` | Filter by transmission    |
+| make        | `?make=Toyota`     | Filter by make                 |
+| minPrice    | `?minPrice=10000`  | Minimum price                  |
+| maxPrice    | `?maxPrice=50000`  | Maximum price                  |
+| minYear     | `?minYear=2020`    | Minimum year                   |
+| maxYear     | `?maxYear=2024`    | Maximum year                   |
+| search      | `?search=camry`    | Keyword search (make/model/desc)|
+| sortBy      | `?sortBy=price`    | Sort field                     |
+| sortOrder   | `?sortOrder=asc`   | asc or desc                    |
 
 ---
 
-## Endpoints de la API
+## Seed Accounts (after running `npm run seed`)
 
-### Autenticación
-| Método | Ruta                            | Acceso      | Descripción              |
-|--------|---------------------------------|-------------|--------------------------|
-| POST   | `/api/auth/register`            | Público     | Registrar usuario        |
-| POST   | `/api/auth/login`               | Público     | Iniciar sesión           |
-| GET    | `/api/auth/me`                  | Privado     | Perfil del usuario       |
-| GET    | `/api/auth/users`               | Admin       | Listar todos los usuarios|
-| PATCH  | `/api/auth/users/:id/role`      | Admin       | Cambiar rol de usuario   |
+| Role  | Email                    | Password  |
+|-------|--------------------------|-----------|
+| Admin | admin@autovault.com      | admin123  |
+| User  | carlos@example.com       | user1234  |
+| User  | sofia@example.com        | user1234  |
 
-### Tareas
-| Método | Ruta                            | Acceso      | Descripción              |
-|--------|---------------------------------|-------------|--------------------------|
-| GET    | `/api/tasks`                    | Privado     | Listar (paginación + filtros) |
-| GET    | `/api/tasks/stats`              | Admin       | Estadísticas globales    |
-| GET    | `/api/tasks/:id`                | Privado     | Obtener tarea por ID     |
-| POST   | `/api/tasks`                    | Privado     | Crear tarea              |
-| PUT    | `/api/tasks/:id`                | Privado     | Actualizar tarea         |
-| DELETE | `/api/tasks/:id`                | Privado     | Eliminar tarea           |
-| PATCH  | `/api/tasks/:id/status`         | Privado     | Cambiar estado           |
+---
 
-**Filtros disponibles en `GET /api/tasks`:**
+## Project Structure
+
 ```
-?page=1&limit=6&status=pending&priority=high&search=texto&sortBy=createdAt&sortOrder=desc
+FiPr/
+├── backend/
+│   ├── controllers/   authController.js, carController.js
+│   ├── middleware/    auth.js, errorHandler.js, validate.js
+│   ├── models/        User.js, Car.js
+│   ├── routes/        auth.js, cars.js
+│   ├── tests/         auth.test.js, cars.test.js
+│   ├── seed.js
+│   └── server.js
+├── frontend/
+│   └── src/
+│       ├── components/  Navbar, CarCard, Pagination, PrivateRoute
+│       ├── context/     AuthContext
+│       ├── pages/       Login, Register, Dashboard, Cars, CarDetail, CarForm, Admin, NotFound
+│       └── services/    api.js, authService.js, carService.js
+└── database-model/
+    ├── schema.js
+    └── ER-diagram.md
 ```
-
----
-
-## Funcionalidades del Frontend
-
-- Pantalla de Login y Registro
-- Dashboard con estadísticas en tiempo real
-- Listado de tareas con paginación (6 por página)
-- Filtros: estado, prioridad, búsqueda por texto
-- Crear, editar y eliminar tareas
-- Vista de detalle con cambio de estado rápido
-- Panel administrativo (solo admin): gestión de usuarios, cambio de roles
-- Control visual por rol (menú Admin solo visible para admins)
-- JWT almacenado y verificado automáticamente
-- Rutas protegidas con React Router
-
----
-
-## Pruebas Automatizadas (20 pruebas)
-
-### auth.test.js (10 pruebas)
-1. Registro exitoso devuelve 201 y token JWT
-2. Registro con email duplicado devuelve 409
-3. Registro con datos inválidos devuelve 422 (validación fallida)
-4. Login exitoso devuelve 200, token y datos del usuario
-5. Login con contraseña incorrecta devuelve 401
-6. Login con email no registrado devuelve 401
-7. Acceso permitido a /api/auth/me con token válido
-8. Acceso denegado a /api/auth/me sin token (401)
-9. Acceso denegado por rol insuficiente (403)
-10. Admin puede acceder a /api/auth/users
-
-### tasks.test.js (10 pruebas)
-1. Crear tarea exitosamente devuelve 201
-2. Crear tarea con datos inválidos devuelve 422
-3. Listar tareas devuelve paginación correcta
-4. Filtrar tareas por status devuelve solo las correctas
-5. Obtener tarea por ID devuelve datos completos
-6. Actualizar tarea (PUT) cambia los campos correctamente
-7. Cambiar estado via PATCH /status
-8. Eliminar tarea devuelve 200 y ya no existe (404)
-9. Usuario no puede ver tarea ajena (403)
-10. Admin puede ver tareas de todos los usuarios

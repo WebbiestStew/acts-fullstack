@@ -37,7 +37,7 @@ const Pagination = ({ pagination, onPageChange }) => {
       </button>
 
       <span style={{ fontSize: 13, color: 'var(--text-muted)', marginLeft: 8 }}>
-        {page} / {totalPages} ({pagination.total} tareas)
+        {page} / {totalPages} ({pagination.total} records)
       </span>
     </div>
   );

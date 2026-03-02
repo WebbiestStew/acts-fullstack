@@ -5,23 +5,23 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: [true, 'El nombre es obligatorio'],
+      required: [true, 'Name is required'],
       trim: true,
-      minlength: [2, 'El nombre debe tener al menos 2 caracteres'],
-      maxlength: [50, 'El nombre no puede superar 50 caracteres'],
+      minlength: [2, 'Name must be at least 2 characters'],
+      maxlength: [50, 'Name cannot exceed 50 characters'],
     },
     email: {
       type: String,
-      required: [true, 'El email es obligatorio'],
+      required: [true, 'Email is required'],
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Por favor ingresa un email válido'],
+      match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email address'],
     },
     password: {
       type: String,
-      required: [true, 'La contraseña es obligatoria'],
-      minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
+      required: [true, 'Password is required'],
+      minlength: [6, 'Password must be at least 6 characters'],
       select: false,
     },
     role: {
