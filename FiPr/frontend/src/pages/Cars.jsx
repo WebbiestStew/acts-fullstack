@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import carService from '../services/carService.js';
 import CarCard from '../components/CarCard.jsx';
@@ -16,8 +16,7 @@ const defaultFilters = {
 };
 
 const Cars = () => {
-  const { isAdmin } = useAuth();
-  const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
 
   const [cars, setCars] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
@@ -174,12 +173,13 @@ const Cars = () => {
                 car={car}
                 onDelete={handleDelete}
                 onStatusChange={handleStatusChange}
+                isAdmin={isAdmin}
+                currentUserId={user?._id}
               />
             ))}
           </div>
           <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.totalPages}
+            pagination={pagination}
             onPageChange={setPage}
           />
         </>

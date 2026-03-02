@@ -30,7 +30,7 @@ const Admin = () => {
   const loadUsers = useCallback(async () => {
     try {
       const res = await authService.getUsers();
-      setUsers(res.data.data || []);
+      setUsers(res.data.users || res.data.data || []);
     } catch (err) {
       setError('Failed to load users: ' + (err.response?.data?.message || err.message));
     } finally {
